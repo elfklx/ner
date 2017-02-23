@@ -253,7 +253,7 @@ class WindowModel(NERModel):
             loss: A 0-d tensor (scalar)
         """
         ### YOUR CODE HERE (~2-5 lines)
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, self.labels_placeholder))                           
+        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(pred, self.labels_placeholder))                           
         ### END YOUR CODE
         return loss
 
