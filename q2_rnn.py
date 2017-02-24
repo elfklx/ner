@@ -286,8 +286,8 @@ class RNNModel(NERModel):
 
         # Make sure to reshape @preds here.
         ### YOUR CODE HERE (~2-4 lines)
-        preds = tf.pack(preds)
-        preds = tf.transpose(preds, perm=[1,0,2])
+        preds = tf.pack(preds, axis=1)
+        #preds = tf.transpose(preds, perm=[1,0,2])
         ### END YOUR CODE
 
         assert preds.get_shape().as_list() == [None, self.max_length, self.config.n_classes], "predictions are not of the right shape. Expected {}, got {}".format([None, self.max_length, self.config.n_classes], preds.get_shape().as_list())
