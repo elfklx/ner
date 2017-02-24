@@ -108,8 +108,8 @@ def pad_sequences(data, max_length):
             ret.append((sentence[:max_length], labels[:max_length], [True] * max_length))
         else:
             p_len = max_length - sentence_len
-            new_sentence = sentence + [[0] * len(sentence[0])] * p_len
-            new_labels = labels + [4] * p_len
+            new_sentence = sentence + [zero_vector] * p_len
+            new_labels = labels + [zero_label] * p_len
             masking = [True] * sentence_len + [False] * p_len
             ret.append((new_sentence, new_labels, masking))
         ### END YOUR CODE ###
@@ -279,6 +279,7 @@ class RNNModel(NERModel):
         # Define U and b2 as variables.
         # Initialize state as vector of zeros.
         ### YOUR CODE HERE (~4-6 lines)
+        xavier_initializer = tf.contrib.layers.xavier_initializer()
         U = tf.Variable(xavier_initializer((Config.hidden_size, self.config.n_classes)), name="U")
         b2 = tf.Variable(tf.zeros((self.config.n_classes)), name="b2")
         h = tf.Variable(tf.zeros(shape=(Config.hidden_size), name="h"))
@@ -291,11 +292,12 @@ class RNNModel(NERModel):
                 tf.get_variable_scope().reuse_variables()
                 o_t, h = cell(x[timestep], h)
                 o_drop_t = tf.nn.dropout(o_t, self.dropout_placeholder)
-                pred.append(tf.matmul(o_drop_t, U) + b_2)
+                preds.append(tf.matmul(o_drop_t, U) + b_2)
                 ### END YOUR CODE
 
         # Make sure to reshape @preds here.
         ### YOUR CODE HERE (~2-4 lines)
+
         ### END YOUR CODE
 
         assert preds.get_shape().as_list() == [None, self.max_length, self.config.n_classes], "predictions are not of the right shape. Expected {}, got {}".format([None, self.max_length, self.config.n_classes], preds.get_shape().as_list())
