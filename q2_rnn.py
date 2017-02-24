@@ -149,6 +149,10 @@ class RNNModel(NERModel):
         (Don't change the variable names)
         """
         ### YOUR CODE HERE (~4-6 lines)
+        self.input_placeholder = tf.placeholder(tf.int32, shape=(None, self.max_length, Config.n_features), name="input")
+        self.labels_placeholder = tf.placeholder(tf.int32, shape=(None, self.max_length), name="labels")
+        self.mask_placeholder = tf.placeholder(tf.bool, shape=(None, self.max_length), name="mask")
+        self.dropout_placeholder = tf.placeholder(tf.float32, shape=(), name="dropout")
         ### END YOUR CODE
 
     def create_feed_dict(self, inputs_batch, mask_batch, labels_batch=None, dropout=1):
@@ -174,6 +178,15 @@ class RNNModel(NERModel):
             feed_dict: The feed dictionary mapping from placeholders to values.
         """
         ### YOUR CODE (~6-10 lines)
+        feed_dict = {}
+        if inputs_batch != None: 
+            feed_dict[self.input_placeholder] = inputs_batch
+        if mask_batch != None: 
+            feed_dict[self.mask_placeholder] = mask_batch
+        if labels_batch != None: 
+            feed_dict[self.labels_placeholder] = labels_batch
+        if dropout != None: 
+            feed_dict[self.dropout_placeholder] = dropout
         ### END YOUR CODE
         return feed_dict
 
@@ -198,6 +211,13 @@ class RNNModel(NERModel):
             embeddings: tf.Tensor of shape (None, max_length, n_features*embed_size)
         """
         ### YOUR CODE HERE (~4-6 lines)
+        with tf.variable_scope('model') as scope:
+            L = tf.Variable(self.pretrained_embeddings, name="L")
+        
+        # print L.get_shape()
+        # print self.input_placeholder.get_shape()
+
+        embeddings = tf.reshape(tf.nn.embedding_lookup(L, self.input_placeholder), [-1, self.max_length, Config.n_features * Config.embed_size])
         ### END YOUR CODE
         return embeddings
 
@@ -259,12 +279,19 @@ class RNNModel(NERModel):
         # Define U and b2 as variables.
         # Initialize state as vector of zeros.
         ### YOUR CODE HERE (~4-6 lines)
+        U = tf.Variable(xavier_initializer((Config.hidden_size, self.config.n_classes)), name="U")
+        b2 = tf.Variable(tf.zeros((self.config.n_classes)), name="b2")
+        h = tf.Variable(tf.zeros(shape=(Config.hidden_size), name="h"))
         ### END YOUR CODE
 
         with tf.variable_scope("RNN"):
             for time_step in range(self.max_length):
                 ### YOUR CODE HERE (~6-10 lines)
-                pass
+                h = tf.get_variable("h")
+                tf.get_variable_scope().reuse_variables()
+                o_t, h = cell(x[timestep], h)
+                o_drop_t = tf.nn.dropout(o_t, self.dropout_placeholder)
+                pred.append(tf.matmul(o_drop_t, U) + b_2)
                 ### END YOUR CODE
 
         # Make sure to reshape @preds here.

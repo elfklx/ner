@@ -190,8 +190,8 @@ class WindowModel(NERModel):
         with tf.variable_scope('model') as scope:
             L = tf.Variable(self.pretrained_embeddings, name="L")
         
-        print L.get_shape()
-        print self.input_placeholder.get_shape()
+        # print L.get_shape()
+        # print self.input_placeholder.get_shape()
 
         embeddings = tf.reshape(tf.nn.embedding_lookup(L, self.input_placeholder), [-1, self.config.n_window_features  * self.config.embed_size])                                                     
                                   
