@@ -37,7 +37,7 @@ class Config:
     n_word_features = 2 # Number of features for every word in the input.
     window_size = 1 # The size of the window to use.
     ### YOUR CODE HERE
-    n_window_features = (2*window_size + 1)*n_word_features # The total number of features used for each window = # of words in a window * the number features per word
+    n_window_features = (2 * window_size + 1)*n_word_features # The total number of features used for each window = # of words in a window * the number features per word
     ### END YOUR CODE
     n_classes = 5
     dropout = 0.5
