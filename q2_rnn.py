@@ -50,9 +50,9 @@ class Config:
     def __init__(self, args):
         self.cell = args.cell
 
-        if "output_path" in args:
+        if "model_path" in args:
             # Where to save things.
-            self.output_path = args.output_path
+            self.output_path = args.model_path
         else:
             self.output_path = "results/{}/{:%Y%m%d_%H%M%S}/".format(self.cell, datetime.now())
         self.model_output = self.output_path + "model.weights"
@@ -282,22 +282,24 @@ class RNNModel(NERModel):
         xavier_initializer = tf.contrib.layers.xavier_initializer()
         U = tf.Variable(xavier_initializer((Config.hidden_size, self.config.n_classes)), name="U")
         b2 = tf.Variable(tf.zeros((self.config.n_classes)), name="b2")
-        h = tf.Variable(tf.zeros(shape=(Config.hidden_size), name="h"))
+        print tf.shape(x)[0]
+        h = tf.Variable(tf.zeros(shape=(1, Config.hidden_size), name="h"))
         ### END YOUR CODE
 
         with tf.variable_scope("RNN"):
             for time_step in range(self.max_length):
                 ### YOUR CODE HERE (~6-10 lines)
-                h = tf.get_variable("h")
-                tf.get_variable_scope().reuse_variables()
-                o_t, h = cell(x[timestep], h)
+                #h = tf.get_variable("h")
+                if time_step > 0: tf.get_variable_scope().reuse_variables()
+                o_t, h = cell(x[:,time_step,:], h)
                 o_drop_t = tf.nn.dropout(o_t, self.dropout_placeholder)
-                preds.append(tf.matmul(o_drop_t, U) + b_2)
+                preds.append(tf.matmul(o_drop_t, U) + b2)
                 ### END YOUR CODE
 
         # Make sure to reshape @preds here.
         ### YOUR CODE HERE (~2-4 lines)
-
+        preds = tf.pack(preds)
+        preds = tf.transpose(preds, perm=[1,0,2])
         ### END YOUR CODE
 
         assert preds.get_shape().as_list() == [None, self.max_length, self.config.n_classes], "predictions are not of the right shape. Expected {}, got {}".format([None, self.max_length, self.config.n_classes], preds.get_shape().as_list())
@@ -319,6 +321,8 @@ class RNNModel(NERModel):
             loss: A 0-d tensor (scalar)
         """
         ### YOUR CODE HERE (~2-4 lines)
+        full_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(preds, self.labels_placeholder)
+        loss = tf.reduce_mean(tf.boolean_mask(full_loss, self.mask_placeholder))
         ### END YOUR CODE
         return loss
 
@@ -342,6 +346,7 @@ class RNNModel(NERModel):
             train_op: The Op for training.
         """
         ### YOUR CODE HERE (~1-2 lines)
+        train_op = tf.train.AdamOptimizer(self.config.lr).minimize(loss)
         ### END YOUR CODE
         return train_op
 
