@@ -123,29 +123,23 @@ class RNNModel(NERModel):
     given token (e.g. Henry) using a featurized window around the token.
     """
 
-    def add_placeholders(self):
+     def add_placeholders(self):
         """Generates placeholder variables to represent the input tensors
-
         These placeholders are used as inputs by the rest of the model building and will be fed
         data during training.  Note that when "None" is in a placeholder's shape, it's flexible
         (so we can use different batch sizes without rebuilding the model).
-
         Adds following nodes to the computational graph
-
         input_placeholder: Input placeholder tensor of  shape (None, self.max_length, n_features), type tf.int32
         labels_placeholder: Labels placeholder tensor of shape (None, self.max_length), type tf.int32
         mask_placeholder:  Mask placeholder tensor of shape (None, self.max_length), type tf.bool
         dropout_placeholder: Dropout value placeholder (scalar), type tf.float32
-
         TODO: Add these placeholders to self as the instance variables
             self.input_placeholder
             self.labels_placeholder
             self.mask_placeholder
             self.dropout_placeholder
-
         HINTS:
             - Remember to use self.max_length NOT Config.max_length
-
         (Don't change the variable names)
         """
         ### YOUR CODE HERE (~4-6 lines)
@@ -157,18 +151,14 @@ class RNNModel(NERModel):
 
     def create_feed_dict(self, inputs_batch, mask_batch, labels_batch=None, dropout=1):
         """Creates the feed_dict for the dependency parser.
-
         A feed_dict takes the form of:
-
         feed_dict = {
                 <placeholder>: <tensor of values to be passed for placeholder>,
                 ....
         }
-
         Hint: The keys for the feed_dict should be a subset of the placeholder
                     tensors created in add_placeholders.
         Hint: When an argument is None, don't add it to the feed_dict.
-
         Args:
             inputs_batch: A batch of input data.
             mask_batch:   A batch of mask data.
@@ -280,24 +270,24 @@ class RNNModel(NERModel):
         # Initialize state as vector of zeros.
         ### YOUR CODE HERE (~4-6 lines)
         xavier_initializer = tf.contrib.layers.xavier_initializer()
-        U = tf.Variable(xavier_initializer((Config.hidden_size, self.config.n_classes)), name="U")
-        b2 = tf.Variable(tf.zeros((self.config.n_classes)), name="b2")
-        h = tf.Variable(tf.zeros(shape=(Config.hidden_size), name="h"))
+        U = tf.get_variable(name="U", shape=(Config.hidden_size, Config.n_classes), dtype=tf.float32, initializer=xavier_initializer)
+        b2 = tf.get_variable(name="b2", shape=(Config.n_classes,), dtype=tf.float32, initializer=tf.constant_initializer(0.0))
+        h = tf.get_variable(name="h", shape=(Config.hidden_size,), dtype=tf.float32, initializer=tf.constant_initializer(0.0))
         ### END YOUR CODE
 
         with tf.variable_scope("RNN"):
             for time_step in range(self.max_length):
                 ### YOUR CODE HERE (~6-10 lines)
                 h = tf.get_variable("h")
-                tf.get_variable_scope().reuse_variables()
-                o_t, h = cell(x[timestep], h)
+                if time_step > 0: tf.get_variable_scope().reuse_variables()
+                o_t, h = cell(x[time_step], h)
                 o_drop_t = tf.nn.dropout(o_t, self.dropout_placeholder)
                 preds.append(tf.matmul(o_drop_t, U) + b_2)
                 ### END YOUR CODE
 
         # Make sure to reshape @preds here.
         ### YOUR CODE HERE (~2-4 lines)
-
+        preds = tf.pack(preds)
         ### END YOUR CODE
 
         assert preds.get_shape().as_list() == [None, self.max_length, self.config.n_classes], "predictions are not of the right shape. Expected {}, got {}".format([None, self.max_length, self.config.n_classes], preds.get_shape().as_list())
